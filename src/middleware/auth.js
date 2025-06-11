@@ -8,34 +8,37 @@ const auth = async (req, res, next) => {
     const authHeader = req.header('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Authorization token not found' });
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
     }
     
     const token = authHeader.replace('Bearer ', '');
     
+    // Hard-coded fallback secret for development
+    const jwtSecret = process.env.JWT_SECRET || 'mysecretkey123456789';
+    
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Find the user
-    const user = await User.findByPk(decoded.id);
-    
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+    try {
+      const decoded = jwt.verify(token, jwtSecret);
+      
+      // Find the user
+      const user = await User.findByPk(decoded.id);
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Session expired. Please log in again.' });
+      }
+      
+      // Attach user to request object
+      req.user = user;
+      req.token = token;
+      
+      next();
+    } catch (jwtError) {
+      if (jwtError.name === 'JsonWebTokenError' || jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Session expired. Please log in again.' });
+      }
+      throw jwtError; // Re-throw if it's not a token error
     }
-    
-    // Attach user to request object
-    req.user = user;
-    req.token = token;
-    
-    next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired' });
-    }
-    
     console.error('Auth middleware error:', error);
     res.status(500).json({ message: 'Server error' });
   }

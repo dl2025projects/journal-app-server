@@ -22,7 +22,13 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
     validate: {
-      isEmail: true
+      // Custom validator to be more flexible with email formats
+      isValidEmail(value) {
+        // Simple pattern: something @ something . something
+        if (!/\S+@\S+\.\S+/.test(value)) {
+          throw new Error('Please provide a valid email');
+        }
+      }
     }
   },
   password: {
