@@ -1,0 +1,28 @@
+-- Create the database if it doesn't exist
+CREATE DATABASE IF NOT EXISTS journalapp;
+USE journalapp;
+
+-- Create Users table
+CREATE TABLE IF NOT EXISTS Users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(30) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  lastLoginDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create JournalEntries table
+CREATE TABLE IF NOT EXISTS JournalEntries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  date DATE NOT NULL,
+  userId INT NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE,
+  INDEX journal_entry_date_idx (date),
+  INDEX journal_entry_user_id_idx (userId)
+); 
